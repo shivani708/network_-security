@@ -4,7 +4,7 @@ import numpy as np
 import time
 
 # ============ USER SETTINGS ============
-FILE_PATH = "/home/tihan40903/Desktop/Attack/gqrx_20251113_114520_910000199_2000000_fc.raw"
+FILE_PATH = "gqrx_20251113_114520_910000199_2000000_fc.raw"
 TX_FREQ = 910.1e6           # 910 MHz
 TX_RATE = 2e6             # 2 MSPS (match your GQRX sample rate exactly!)
 TX_GAIN = 70              # Adjust between 0-76 dB depending on need

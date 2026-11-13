@@ -149,4 +149,4 @@ A browser-based ground-station dashboard — a lightweight Mission Planner built
 - "MAVSec: Securing the MAVLink Protocol for Ardupilot/PX4 Unmanned Aerial Systems," IEEE. https://ieeexplore.ieee.org/document/8766667/
 - "Secure Communication System of Drone Service using Hybrid Cryptography over 4G/LTE Network," IEEE. https://ieeexplore.ieee.org/document/9231951/
 
-**Author:** Kolkur Shivani Reddy, TiHAN, IIT Hyderabad. Guided by Dr. P. Rajalakshmi and Dr. Paresh Upadhyay.
+**Author:** Shivani Reddy

@@ -4,7 +4,7 @@ import numpy as np
 import time
 
 # ============ USER SETTINGS ============
-FILE_PATH = "/home/tihan40903/Desktop/Attack/a3with_ency_without_hop_200.raw"
+FILE_PATH = "a3with_ency_without_hop_200.raw"
 TX_FREQ = 910e6           # 910 MHz
 TX_RATE = 2e6             # 2 MSPS (match your GQRX sample rate exactly!)
 TX_GAIN = 70              # Adjust between 0-76 dB depending on need

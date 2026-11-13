@@ -15,7 +15,7 @@ import argparse
 import sys
 
 # ------------- Config (edit as needed) -------------
-FILE_PATH = "/home/tihan40903/gqrx_20251103_061431_910000199_2000000_fc.raw"
+FILE_PATH = "gqrx_20251103_061431_910000199_2000000_fc.raw"
 # Parsed from your filename earlier, change if you recorded with different settings:
 DEFAULT_TX_FREQ = 910.000199e6   # Hz
 DEFAULT_TX_RATE = 2e6            # S/s
