@@ -1,0 +1,2928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>Drone Control Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: #333;
+            padding: 0;
+            overflow-x: auto;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 0.5rem 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            width: 100%;
+            text-align: center;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 0;
+            position: relative;
+        }
+
+        .header-wrapper {
+            grid-column: 1 / -1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            flex: 1;
+            margin: 0;
+        }
+
+        .header-logo {
+            width: auto;
+            height: 90px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .header-logo-right {
+            height: 80px;
+            width: auto;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .drone-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            color: #3498db;
+            animation: hover 2s ease-in-out infinite;
+            grid-column: 1 / -1;
+            text-align: center;
+        }
+
+        @keyframes hover {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Container for connection panel and server config side by side */
+        .top-config-container {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 0.75rem;
+            grid-column: 1;
+            justify-content: start;
+        }
+
+        .connection-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 0.5rem 0.75rem;
+            border: 2px solid #e9ecef;
+            width: auto;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 0.4rem;
+            font-size: 0.8rem;
+        }
+
+        .connection-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+
+        .connection-indicator.connected {
+            background: #27ae60;
+        }
+
+        .connection-indicator.searching {
+            background: #f39c12;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .connection-details {
+            display: flex;
+            flex-direction: row;
+            gap: 0.4rem;
+            margin-top: 0.4rem;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .connection-detail {
+            background: white;
+            padding: 0.25rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 0.7rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .connection-detail strong {
+            color: #2c3e50;
+            font-size: 0.7rem;
+        }
+
+        .status {
+            background: #ecf0f1;
+            border-radius: 10px;
+            padding: 0.6rem;
+            border-left: 4px solid #3498db;
+            grid-column: 1;
+            font-size: 0.85rem;
+        }
+
+        .status.success {
+            background: #d5f4e6;
+            border-left-color: #27ae60;
+            color: #27ae60;
+        }
+
+        .status.error {
+            background: #fadbd8;
+            border-left-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            border-left-color: #f39c12;
+            color: #f39c12;
+        }
+
+        .status.loading {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            color: #2196f3;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            grid-column: 1;
+        }
+
+        .controls .control-btn:last-child {
+            grid-column: 2;
+        }
+
+        .control-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .control-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+
+        .control-btn.connect {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .control-btn.arm {
+            background: linear-gradient(45deg, #27ae60, #219a52);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .control-btn.takeoff {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .control-btn.land {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .control-btn.guided {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        .control-btn.stabilize {
+            background: linear-gradient(45deg, #16a085, #1abc9c);
+            box-shadow: 0 4px 15px rgba(26, 188, 156, 0.3);
+        }
+
+        .control-btn.poshold {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            box-shadow: 0 4px 15px rgba(52, 73, 94, 0.3);
+        }
+
+        .control-btn.rtl {
+            background: linear-gradient(45deg, #d35400, #e67e22);
+            box-shadow: 0 4px 15px rgba(211, 84, 0, 0.3);
+        }
+
+        /* Container for Movement and Throttle side by side */
+        .controls-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            grid-column: 1;
+        }
+
+        /* Movement Controls Styles */
+        .movement-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .movement-section h3 {
+            color: #2c3e50;
+            margin-bottom: 0.75rem;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .movement-control-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .distance-input-section {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 2px solid #3498db;
+        }
+
+        .distance-input-section label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.85rem;
+        }
+
+        #movementDistance {
+            width: 60px;
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .distance-unit {
+            color: #7f8c8d;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .movement-controls {
+            display: flex;
+            justify-content: center;
+        }
+
+        .movement-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 0.4rem;
+            width: 150px;
+            height: 150px;
+        }
+
+        .movement-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .movement-btn:first-child {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .movement-btn:nth-child(3) {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .movement-btn:nth-child(4) {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .movement-btn:last-child {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        .movement-center {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            border: 2px solid #3498db;
+        }
+
+        .btn-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.15rem;
+        }
+
+        .btn-icon {
+            font-size: 1rem;
+        }
+
+        .btn-text {
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+
+        .distance-indicator {
+            font-size: 0.6rem;
+            opacity: 0.8;
+        }
+
+        .movement-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .movement-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+        }
+
+        /* Throttle Control Styles */
+        .throttle-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .throttle-section h3 {
+            color: #2c3e50;
+            margin-bottom: 0.75rem;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .throttle-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .throttle-control label {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        #throttleSlider {
+            width: 100%;
+            max-width: 200px;
+            height: 6px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        #throttleSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+
+        #throttleSlider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            border: none;
+        }
+
+        .throttle-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 200px;
+            font-size: 0.65rem;
+            color: #7f8c8d;
+        }
+
+        .throttle-apply {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .server-config {
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            width: auto;
+        }
+
+        .server-config-inputs {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .server-config strong {
+            font-size: 0.75rem;
+            color: #2c3e50;
+        }
+
+        .server-config label {
+            font-size: 0.7rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .server-config input {
+            padding: 0.25rem 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            width: 100px;
+        }
+
+        .server-config button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 0.7rem;
+        }
+
+        .server-config button:hover {
+            background: #5a6268;
+        }
+
+        /* Auto Update Button Styles */
+        .auto-update-btn {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d) !important;
+            transition: all 0.3s ease;
+        }
+
+        .auto-update-btn.active {
+            background: linear-gradient(45deg, #27ae60, #219a52) !important;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3) !important;
+            animation: pulse-border 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% {
+                box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            }
+            50% {
+                box-shadow: 0 6px 20px rgba(39, 174, 96, 0.5);
+            }
+        }
+
+        .warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .warning-dialog {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .warning-dialog h3 {
+            color: #e74c3c;
+            margin-bottom: 1rem;
+        }
+
+        .warning-dialog button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        /* Config Editor Modal Styles */
+        .config-editor-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            overflow-y: auto;
+            padding: 2rem 0;
+        }
+
+        .config-editor-dialog {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            margin: auto;
+        }
+
+        .config-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .config-editor-header h2 {
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .config-close-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .config-close-btn:hover {
+            background: #c0392b;
+            transform: rotate(90deg);
+        }
+
+        .config-sections {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid #e9ecef;
+        }
+
+        .config-section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .config-item {
+            display: grid;
+            grid-template-columns: minmax(200px, auto) 1fr 140px;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .config-item:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+
+        .config-label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .config-input {
+            padding: 0.5rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .config-input.boolean-select {
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .config-unit {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .config-freq-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .config-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .config-btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .config-btn-save {
+            background: linear-gradient(45deg, #27ae60, #219a52);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .config-btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .config-btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .config-btn-cancel:hover {
+            background: #7f8c8d;
+        }
+
+        .config-help-text {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        /* Parameters Section Styles */
+        .parameters-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid #e9ecef;
+            grid-column: 2;
+            grid-row: 2 / span 10;
+        }
+
+        .parameters-section h3 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 1400px) {
+            .parameters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .parameters-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .param-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .param-card:hover {
+            border-color: #3498db;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+        }
+
+        .param-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .param-header {
+            font-weight: bold;
+            color: #3498db;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .param-row:last-child {
+            border-bottom: none;
+        }
+
+        .param-label {
+            color: #555;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+
+        .param-value {
+            color: #2c3e50;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            background: #ecf0f1;
+            padding: 0.2rem 0.4rem;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .freq-channels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .freq-group {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .freq-group strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .freq-list {
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .freq-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .freq-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .freq-list::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 10px;
+        }
+
+        /* Current Frequency Indicator Styles */
+        .current-freq-indicator {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            border-radius: 10px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 2px solid #27ae60;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(46, 204, 113, 0.6);
+            }
+        }
+
+        .current-freq-header {
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .current-freq-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .freq-item {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .freq-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .freq-item-label {
+            display: block;
+            font-size: 0.7rem;
+            color: #555;
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
+
+        .freq-item-value {
+            display: block;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            color: #2c3e50;
+        }
+
+        .freq-item-value.current-tx {
+            color: #e74c3c;
+        }
+
+        .freq-item-value.current-rx {
+            color: #3498db;
+        }
+
+        /* Highlight active frequency in lists */
+        .freq-active {
+            background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+            color: white !important;
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            display: inline-block;
+            animation: blink-green 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink-green {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .freq-channels {
+                grid-template-columns: 1fr;
+            }
+
+            .parameters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .current-freq-display {
+                grid-template-columns: 1fr;
+            }
+
+            .config-item {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .config-label {
+                font-weight: bold;
+                margin-bottom: 0.25rem;
+            }
+
+            .config-unit {
+                text-align: left;
+            }
+
+            .config-editor-dialog {
+                width: 95%;
+                padding: 1rem;
+            }
+
+            .config-actions {
+                flex-direction: column;
+            }
+
+            .config-btn {
+                width: 100%;
+            }
+        }
+
+        /* Frequency List Selector Styles */
+        .freq-list-selector {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .freq-list-header {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .freq-list-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .freq-list-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.5rem;
+            border-radius: 6px;
+            color: white;
+        }
+
+        .freq-list-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+
+        .freq-list-value {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .freq-list-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .freq-list-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid white;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .freq-list-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .freq-list-btn.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+            animation: pulse-active 2s infinite;
+        }
+
+        .freq-list-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes pulse-active {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(76, 175, 80, 0.9);
+            }
+        }
+
+        .freq-list-status {
+            margin-top: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            text-align: center;
+            display: none;
+        }
+
+        .freq-list-status.show {
+            display: block;
+        }
+
+        .freq-list-status.success {
+            background: rgba(76, 175, 80, 0.3);
+            color: white;
+        }
+
+        .freq-list-status.error {
+            background: rgba(244, 67, 54, 0.3);
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .connection-details {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .container {
+                padding: 1rem;
+                grid-template-columns: 1fr;
+            }
+            
+            .movement-section,
+            .throttle-section {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-wrapper">
+            <img src="https://tihan.iith.ac.in/images/logo%20vector%20horizontal-07.png" alt="TiHAN Logo" class="header-logo">
+            <h1>Anti Jamming Drone Master Control Panel</h1>
+            <img src="https://iith.ac.in/assets/images/logo.png" alt="IITH Logo" class="header-logo-right">
+        </div>
+        
+        <div class="top-config-container">
+            <div class="connection-panel">
+                <div class="connection-status">
+                    <div class="connection-indicator" id="connectionIndicator"></div>
+                    <span id="connectionStatus"><strong>Disconnected</strong></span>
+                </div>
+                
+                <div class="connection-details" id="connectionDetails">
+                    <div class="connection-detail">
+                        <strong>Server:</strong> <span id="serverStatus">Disconnected</span>
+                    </div>
+                    <div class="connection-detail">
+                        <strong>Drone:</strong> <span id="droneStatus">Not Connected</span>
+                    </div>
+                    <div class="connection-detail">
+                        <strong>Type:</strong> <span id="connectionType">None</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="server-config">
+                <strong>Server Configuration:</strong>
+                <div class="server-config-inputs">
+                    <label>Host:</label>
+                    <input type="text" id="serverHost" value="127.0.0.1" placeholder="127.0.0.1">
+                    <label>Port:</label>
+                    <input type="number" id="serverPort" value="5000" placeholder="5000">
+                    <button onclick="updateServerConfig()">Update</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status" id="statusDisplay">
+            Ready to connect to drone control server
+        </div>
+
+                <div class="controls">
+            <button class="control-btn connect" id="connectBtn" onclick="forceConnect()">
+                🔌 Connect
+            </button>
+            <button class="control-btn arm" id="armBtn" onclick="sendCommand('arm')" disabled>
+                🔓 Arm
+            </button>
+            <button class="control-btn disarm" id="disarmBtn" onclick="sendCommand('disarm')" disabled>
+                🔒 Disarm
+            </button>
+            <button class="control-btn" id="guidedBtn" onclick="sendCommand('mode/guided')" disabled>
+                🎯 Guided Mode
+            </button>
+            <button class="control-btn stabilize" id="stabilizeBtn" onclick="sendCommand('mode/stabilize')" disabled>
+                ⚖️ Stabilize
+            </button>
+            <button class="control-btn poshold" id="posholdBtn" onclick="sendCommand('mode/poshold')" disabled>
+                📍 PosHold
+            </button>
+            <button class="control-btn rtl" id="rtlBtn" onclick="sendCommand('mode/rtl')" disabled>
+                🏠 RTL
+            </button>
+            <button class="control-btn takeoff" id="takeoffBtn" onclick="sendCommand('takeoff')" disabled>
+                🚀 Takeoff
+            </button>
+            <button class="control-btn land" id="landBtn" onclick="sendCommand('mode/land')" disabled>
+                🛬 Land
+            </button>
+            <button class="control-btn motor_test" id="motrtest" onclick="sendCommand('motor_test')" disabled>
+                ⚙️ Motor Test
+            </button>
+            <button class="control-btn fulltakeoff" id="fullTakeoffBtn" onclick="sendFullTakeoff(10, 3)" disabled>
+                🚀 Full Takeoff
+            </button>
+            <button class="control-btn" id="editEnvBtn" onclick="window.location.href='config.html'" style="background: linear-gradient(45deg, #9b59b6, #8e44ad); box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);">
+                ⚙️ Edit Config
+            </button>
+            <button class="control-btn" id="executeTmp92Btn" onclick="executeTmp92Script()" style="background: linear-gradient(45deg, #e67e22, #d35400); box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);">
+                🖥️ Run tmp92.py
+            </button>
+            <button class="control-btn" id="killTmp92Btn" onclick="killTmp92Script()" style="background: linear-gradient(45deg, #e74c3c, #c0392b); box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); display: none;">
+                🛑 Kill tmp92.py
+            </button>
+            <button class="control-btn" id="executeTmp88Btn" onclick="executeTmp88Script()" style="background: linear-gradient(45deg, #16a085, #138d75); box-shadow: 0 4px 15px rgba(22, 160, 133, 0.3);">
+                🖥️ Run tmp88.py (Base)
+            </button>
+            <button class="control-btn" id="killTmp88Btn" onclick="killTmp88Script()" style="background: linear-gradient(45deg, #c0392b, #a93226); box-shadow: 0 4px 15px rgba(192, 57, 43, 0.3); display: none;">
+                🛑 Kill tmp88.py
+            </button>
+            <button class="control-btn" id="cameraBtn" onclick="openCamera()" style="background: linear-gradient(45deg, #3498db, #2980b9); box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);">
+                📷 Camera
+            </button>
+        </div>
+
+        <!-- LoRa Parameters Section -->
+        <div class="parameters-section">
+            <h3>📡 LoRa Configuration Parameters</h3>
+            
+            <!-- Current Frequency Indicator -->
+            <div class="current-freq-indicator">
+                <div class="current-freq-header">CURRENT ACTIVE FREQUENCY</div>
+                <div class="current-freq-display">
+                    <div class="freq-item">
+                        <span class="freq-item-label">Channel:</span>
+                        <span class="freq-item-value" id="current-channel">-</span>
+                    </div>
+                    <div class="freq-item">
+                        <span class="freq-item-label">TX Frequency:</span>
+                        <span class="freq-item-value current-tx" id="current-tx-freq">-</span>
+                    </div>
+                    <div class="freq-item">
+                        <span class="freq-item-label">RX Frequency:</span>
+                        <span class="freq-item-value current-rx" id="current-rx-freq">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Frequency List Selector -->
+            <div class="freq-list-selector">
+                <div class="freq-list-header">
+                    🔄 Frequency List Selector (Live Switch)
+                </div>
+                <div class="freq-list-info">
+                    <div class="freq-list-item">
+                        <div class="freq-list-label">Active List Index (i)</div>
+                        <div class="freq-list-value" id="active-list-index">-</div>
+                    </div>
+                    <div class="freq-list-item">
+                        <div class="freq-list-label">Total Lists Available</div>
+                        <div class="freq-list-value" id="total-lists">-</div>
+                    </div>
+                    <div class="freq-list-item">
+                        <div class="freq-list-label">Active Frequency Range</div>
+                        <div class="freq-list-value" id="active-freq-range">-</div>
+                    </div>
+                </div>
+                <div class="freq-list-buttons" id="freqListButtons">
+                    <!-- Buttons will be dynamically generated -->
+                </div>
+                <div class="freq-list-status" id="freqListStatus"></div>
+            </div>
+            
+            <div class="parameters-grid">
+                <div class="param-card">
+                    <div class="param-header">System Settings</div>
+                    <div class="param-row">
+                        <span class="param-label">Heartbeat:</span>
+                        <span class="param-value" id="param-heartbeat">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Frequency Hopping:</span>
+                        <span class="param-value" id="param-hopping">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Hop Interval:</span>
+                        <span class="param-value" id="param-hop-interval">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Hops/Second:</span>
+                        <span class="param-value" id="param-hops-per-sec">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">T Parameter:</span>
+                        <span class="param-value" id="param-t">-</span>
+                    </div>
+                </div>
+
+                <div class="param-card">
+                    <div class="param-header">Radio Settings</div>
+                    <div class="param-row">
+                        <span class="param-label">RX Gain:</span>
+                        <span class="param-value" id="param-rx-gain">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">TX Gain:</span>
+                        <span class="param-value" id="param-tx-gain">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Bandwidth:</span>
+                        <span class="param-value" id="param-bandwidth">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Center Freq:</span>
+                        <span class="param-value" id="param-center-freq">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Sample Rate:</span>
+                        <span class="param-value" id="param-sample-rate">-</span>
+                    </div>
+                </div>
+
+                <div class="param-card">
+                    <div class="param-header">🔒 Encryption</div>
+                    <div class="param-row">
+                        <span class="param-label">PTP:</span>
+                        <span class="param-value" id="param-encryption">Enabled</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Encryption:</span>
+                        <span class="param-value" id="param-encryption">Enabled</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">Compression:</span>
+                        <span class="param-value" id="param-compression">-</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">RSA Key Size:</span>
+                        <span class="param-value" id="param-rsa-key-size">2048</span>
+                    </div>
+                    <div class="param-row">
+                        <span class="param-label">AES Key Size:</span>
+                        <span class="param-value" id="param-aes-key-size">32</span>
+                    </div>
+                </div>
+
+                <div class="param-card full-width">
+                    <div class="param-header">Frequency Channels</div>
+                    <div class="freq-channels">
+                        <div class="freq-group">
+                            <strong>Drone TX Channels:</strong>
+                            <div class="freq-list" id="drone-freq-list">Loading...</div>
+                        </div>
+                        <div class="freq-group">
+                            <strong>Base TX Channels:</strong>
+                            <div class="freq-list" id="base-freq-list">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="control-btn" onclick="refreshParameters()" style="margin: 0;">
+                    🔄 Refresh Parameters
+                </button>
+                <button class="control-btn auto-update-btn" id="autoUpdateBtn" onclick="toggleAutoUpdate()" style="margin: 0;">
+                    <span id="autoUpdateIcon">▶️</span> Auto Update: <span id="autoUpdateStatus">OFF</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Movement and Throttle Controls Container -->
+        <div class="controls-container">
+            <!-- Movement Controls Section -->
+            <div class="movement-section">
+                <h3>Movement Controls</h3>
+                <div class="movement-control-container">
+                    <div class="distance-input-section">
+                        <label for="movementDistance">Distance:</label>
+                        <input type="number" id="movementDistance" min="1" max="100" value="10" step="1">
+                        <span class="distance-unit">m</span>
+                    </div>
+                    <div class="movement-controls">
+                        <div class="movement-grid">
+                            <button class="movement-btn" id="moveNorthBtn" onclick="sendMovementWithDistance('north')" disabled>
+                                <div class="btn-content">
+                                    <span class="btn-icon">⬆️</span>
+                                    <span class="btn-text">North</span>
+                                    <span class="distance-indicator" id="northDistance">10m</span>
+                                </div>
+                            </button>
+                            
+                            <div class="movement-center">
+                                <span>🚁</span>
+                            </div>
+                            
+                            <button class="movement-btn" id="moveWestBtn" onclick="sendMovementWithDistance('west')" disabled>
+                                <div class="btn-content">
+                                    <span class="btn-icon">⬅️</span>
+                                    <span class="btn-text">West</span>
+                                    <span class="distance-indicator" id="westDistance">10m</span>
+                                </div>
+                            </button>
+                            
+                            <button class="movement-btn" id="moveEastBtn" onclick="sendMovementWithDistance('east')" disabled>
+                                <div class="btn-content">
+                                    <span class="btn-icon">➡️</span>
+                                    <span class="btn-text">East</span>
+                                    <span class="distance-indicator" id="eastDistance">10m</span>
+                                </div>
+                            </button>
+                            
+                            <button class="movement-btn" id="moveSouthBtn" onclick="sendMovementWithDistance('south')" disabled>
+                                <div class="btn-content">
+                                    <span class="btn-icon">⬇️</span>
+                                    <span class="btn-text">South</span>
+                                    <span class="distance-indicator" id="southDistance">10m</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Throttle Control Section -->
+            <div class="throttle-section">
+                <h3>Throttle Control</h3>
+                <div class="throttle-control">
+                    <label for="throttleSlider">Throttle: <span id="throttleValue">1500</span></label>
+                    <input type="range" id="throttleSlider" min="1000" max="2000" value="1500" step="10" disabled>
+                    <div class="throttle-labels">
+                        <span>Min</span>
+                        <span>Neutral</span>
+                        <span>Max</span>
+                    </div>
+                    <button class="control-btn throttle-apply" id="applyThrottleBtn" onclick="applyThrottle()" disabled>
+                        Apply Throttle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning overlay -->
+    <div class="warning-overlay" id="warningOverlay">
+        <div class="warning-dialog">
+            <h3>⚠️ Connection Required</h3>
+            <p>Please establish a connection to the drone before attempting any operations.</p>
+            <p>The system will automatically detect and connect to available drones (SITL simulator or real drone).</p>
+            <button onclick="closeWarning()">OK</button>
+        </div>
+    </div>
+
+    <!-- Config Editor Modal -->
+    <div class="config-editor-overlay" id="configEditorOverlay">
+        <div class="config-editor-dialog">
+            <div class="config-editor-header">
+                <h2>⚙️ Edit Configuration Parameters</h2>
+                <button class="config-close-btn" onclick="closeEnvEditor()">✕</button>
+            </div>
+
+            <div class="config-sections" id="configSections">
+                <!-- System Settings Section -->
+                <div class="config-section">
+                    <div class="config-section-title">System Settings</div>
+                    <div class="config-item">
+                        <div class="config-label">HEART_BEAT</div>
+                        <select class="config-input boolean-select" id="env_HEART_BEAT">
+                            <option value="false">Disabled (false)</option>
+                            <option value="true">Enabled (true)</option>
+                        </select>
+                        <div class="config-unit">Boolean</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">HOP_FREQUENCY</div>
+                        <select class="config-input boolean-select" id="env_HOP_FREQUENCY">
+                            <option value="false">Disabled (false)</option>
+                            <option value="true">Enabled (true)</option>
+                        </select>
+                        <div class="config-unit">Boolean</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">COMPRESSION</div>
+                        <select class="config-input boolean-select" id="env_COMPRESSION">
+                            <option value="false">Disabled (false)</option>
+                            <option value="true">Enabled (true)</option>
+                        </select>
+                        <div class="config-unit">Boolean</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">FREQ_HOP_INTERVAL</div>
+                        <input type="number" class="config-input" id="env_FREQ_HOP_INTERVAL" step="0.1" min="0.1">
+                        <div class="config-unit">seconds</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">T</div>
+                        <input type="number" class="config-input" id="env_T" step="1" min="1">
+                        <div class="config-unit">integer</div>
+                    </div>
+                </div>
+
+                <!-- Radio Configuration Section -->
+                <div class="config-section">
+                    <div class="config-section-title">Radio Configuration</div>
+                    <div class="config-item">
+                        <div class="config-label">SF_RX</div>
+                        <input type="number" class="config-input" id="env_SF_RX" step="1" min="7" max="12">
+                        <div class="config-unit">7-12</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">RX_GAIN</div>
+                        <input type="number" class="config-input" id="env_RX_GAIN" step="1" min="0" max="100">
+                        <div class="config-unit">dB</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">TX_GAIN</div>
+                        <input type="number" class="config-input" id="env_TX_GAIN" step="1" min="0" max="100">
+                        <div class="config-unit">dB</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">BANDWIDTH</div>
+                        <input type="number" class="config-input" id="env_BANDWIDTH" step="1000">
+                        <div class="config-unit">Hz</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">CENTER_FREQ</div>
+                        <input type="number" class="config-input" id="env_CENTER_FREQ" step="1000000">
+                        <div class="config-unit">Hz</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">SAMPLE_RATE</div>
+                        <input type="number" class="config-input" id="env_SAMPLE_RATE" step="1000">
+                        <div class="config-unit">Hz</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">SLEEP_TIME</div>
+                        <input type="number" class="config-input" id="env_SLEEP_TIME" step="0.01" min="0">
+                        <div class="config-unit">seconds</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">SAMPLES_BLOCK_REC</div>
+                        <input type="number" class="config-input" id="env_SAMPLES_BLOCK_REC" step="1000">
+                        <div class="config-unit">samples</div>
+                    </div>
+                </div>
+
+                <!-- Frequency Lists Section -->
+                <div class="config-section">
+                    <div class="config-section-title">Drone TX Frequencies</div>
+                    <div class="config-help-text">Comma-separated list of frequencies in MHz (e.g., 900.0,900.1,900.2)</div>
+                    <textarea class="config-freq-input" id="env_DRONE_TX_FREQUENCIES" rows="3"></textarea>
+                </div>
+
+                <div class="config-section">
+                    <div class="config-section-title">Base TX Frequencies</div>
+                    <div class="config-help-text">Comma-separated list of frequencies in MHz (e.g., 910.0,910.1,910.2)</div>
+                    <textarea class="config-freq-input" id="env_BASE_TX_FREQUENCIES" rows="3"></textarea>
+                </div>
+
+                <!-- Web Interface Section -->
+                <div class="config-section">
+                    <div class="config-section-title">Web Interface Settings</div>
+                    <div class="config-item">
+                        <div class="config-label">AUTO_UPDATE_REFRESH_RATE</div>
+                        <input type="number" class="config-input" id="env_AUTO_UPDATE_REFRESH_RATE" step="1000" min="1000">
+                        <div class="config-unit">milliseconds</div>
+                    </div>
+                    <div class="config-help-text">Time between auto-updates when enabled (1000ms = 1 second)</div>
+                </div>
+            </div>
+
+            <div class="config-actions">
+                <button class="config-btn config-btn-cancel" onclick="closeEnvEditor()">Cancel</button>
+                <button class="config-btn config-btn-save" onclick="saveEnvConfig()">💾 Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION VARIABLES
+        // ============================================
+        let AUTO_UPDATE_REFRESH_RATE = 10000; // Default auto-update refresh rate in milliseconds - will be loaded from server
+        // This value is now configurable in the .env file on the server side
+        // Examples: 5000 = 5 seconds, 15000 = 15 seconds, 30000 = 30 seconds
+        // ============================================
+
+        let serverHost = '127.0.0.1';
+        let serverPort = '5000';
+        let serverUrl = `http://${serverHost}:${serverPort}`;
+        let droneConnected = false;
+        let serverConnected = false;
+        let autoUpdateEnabled = false;
+        let autoUpdateInterval = null;
+        
+        // User interaction tracking for smart auto-scroll
+        let userInteracting = false;
+        let lastUserInteraction = 0;
+        let userScrollTimeout = null;
+
+        // Toggle auto-update functionality
+        function toggleAutoUpdate() {
+            autoUpdateEnabled = !autoUpdateEnabled;
+            const btn = document.getElementById('autoUpdateBtn');
+            const icon = document.getElementById('autoUpdateIcon');
+            const status = document.getElementById('autoUpdateStatus');
+            
+            if (autoUpdateEnabled) {
+                btn.classList.add('active');
+                icon.textContent = '⏸️';
+                status.textContent = 'ON';
+                startAutoUpdate();
+            } else {
+                btn.classList.remove('active');
+                icon.textContent = '▶️';
+                status.textContent = 'OFF';
+                updateStatus('Auto-update disabled', 'info');
+                
+                // Clear auto-update interval
+                if (autoUpdateInterval) {
+                    clearInterval(autoUpdateInterval);
+                    autoUpdateInterval = null;
+                }
+            }
+        }
+
+        // Start auto-update with current refresh rate
+        function startAutoUpdate() {
+            // Clear existing interval if any
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+            }
+            
+            const refreshSeconds = (AUTO_UPDATE_REFRESH_RATE / 1000).toFixed(1);
+            updateStatus(`Auto-update enabled: Parameters will refresh every ${refreshSeconds} seconds`, 'success');
+            
+            // Start auto-update interval using current refresh rate from server
+            autoUpdateInterval = setInterval(fetchParameters, AUTO_UPDATE_REFRESH_RATE);
+        }
+
+        // Update auto-update interval when refresh rate changes
+        function updateAutoUpdateInterval() {
+            if (autoUpdateEnabled && autoUpdateInterval) {
+                // Restart with new refresh rate
+                startAutoUpdate();
+            }
+        }
+
+        // Update server configuration
+        function updateServerConfig() {
+            serverHost = document.getElementById('serverHost').value || '127.0.0.1';
+            serverPort = document.getElementById('serverPort').value || '5000';
+            serverUrl = `http://${serverHost}:${serverPort}`;
+            
+            updateStatus('Server configuration updated. Checking connection...', 'info');
+            checkConnection();
+        }
+
+        // Update status display
+        function updateStatus(message, type = 'info') {
+            const statusDisplay = document.getElementById('statusDisplay');
+            statusDisplay.textContent = message;
+            statusDisplay.className = `status ${type}`;
+        }
+
+        // Update connection status
+        function updateConnectionStatus(data) {
+            const indicator = document.getElementById('connectionIndicator');
+            const status = document.getElementById('connectionStatus');
+            const serverStatus = document.getElementById('serverStatus');
+            const droneStatus = document.getElementById('droneStatus');
+            const connectionType = document.getElementById('connectionType');
+            
+            // Update server connection status
+            serverConnected = data.serverConnected;
+            serverStatus.textContent = data.serverConnected ? 'Connected' : 'Disconnected';
+            
+            // Update drone connection status
+            droneConnected = data.droneConnected;
+            droneStatus.textContent = data.droneConnected ? 'Connected' : 'Not Connected';
+            connectionType.textContent = data.connectionType || 'None';
+            
+            // Update main connection indicator
+            if (data.serverConnected && data.droneConnected) {
+                indicator.className = 'connection-indicator connected';
+                status.innerHTML = '<strong>Connected</strong>';
+            } else if (data.serverConnected && !data.droneConnected) {
+                indicator.className = 'connection-indicator searching';
+                status.innerHTML = '<strong>Searching</strong>';
+            } else {
+                indicator.className = 'connection-indicator';
+                status.innerHTML = '<strong>Disconnected</strong>';
+            }
+            
+            // Enable/disable control buttons based on drone connection
+            updateControlButtons(data.droneConnected);
+        }
+
+        // Update control buttons state
+        function updateControlButtons(connected) {
+            const buttons = ['armBtn', 'guidedBtn', 'stabilizeBtn', 'posholdBtn', 'rtlBtn', 'takeoffBtn', 'landBtn','disarmBtn', 'motrtest', 'fullTakeoffBtn', 
+                           'moveNorthBtn', 'moveSouthBtn', 'moveEastBtn', 'moveWestBtn', 'throttleSlider', 'applyThrottleBtn'];
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = !connected;
+                }
+            });
+            
+            // Update connect button
+            const connectBtn = document.getElementById('connectBtn');
+            if (connected) {
+                connectBtn.disabled = true;
+            } else {
+                connectBtn.disabled = false;
+                connectBtn.textContent = '🔌 Connect';
+            }
+        }
+
+        // Check server and drone connection
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${serverUrl}/status`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateConnectionStatus({
+                        serverConnected: true,
+                        droneConnected: data.drone_connected,
+                        connectionType: data.connection_type,
+                        targetSystem: data.target_system
+                    });
+                    
+                    if (data.drone_connected) {
+                        updateStatus(`Connected to ${data.connection_type} - Target System: ${data.target_system}`, 'success');
+                    } else {
+                        updateStatus('Server connected, searching for drone...', 'warning');
+                    }
+                } else {
+                    updateConnectionStatus({
+                        serverConnected: false,
+                        droneConnected: false,
+                        connectionType: null,
+                        targetSystem: null
+                    });
+                    updateStatus('Server connection failed', 'error');
+                }
+            } catch (error) {
+                updateConnectionStatus({
+                    serverConnected: false,
+                    droneConnected: false,
+                    connectionType: null,
+                    targetSystem: null
+                });
+                updateStatus(`Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        // Force connection attempt
+        async function forceConnect() {
+            const button = document.getElementById('connectBtn');
+            const originalText = button.textContent;
+            
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div>Connecting...';
+            updateStatus('Attempting to connect to drone...', 'loading');
+
+            try {
+                const response = await fetch(`${serverUrl}/connect`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus(data.status, 'success');
+                    // Refresh connection status
+                    setTimeout(checkConnection, 1000);
+                } else {
+                    const data = await response.json();
+                    updateStatus(data.error || 'Connection failed', 'error');
+                }
+            } catch (error) {
+                updateStatus(`Connection error: ${error.message}`, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
+
+        // Send command to backend
+        async function sendCommand(endpoint) {
+            // Check if drone is connected
+            if (!droneConnected) {
+                showWarning();
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div>Sending...';
+            updateStatus('Sending command...', 'loading');
+
+            try {
+                const response = await fetch(`${serverUrl}/${endpoint}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus(data.status || 'Command sent successfully', 'success');
+                } else {
+                    const data = await response.json();
+                    if (response.status === 503) {
+                        updateStatus(data.error || 'Connection required', 'warning');
+                        showWarning();
+                    } else {
+                        updateStatus(data.error || `HTTP ${response.status}: ${response.statusText}`, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error sending command:', error);
+                updateStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                // Restore button state
+                button.disabled = !droneConnected;
+                button.innerHTML = originalText;
+            }
+        }
+
+        async function sendFullTakeoff(alt = 10, delay = 2) {
+            if (!droneConnected) return showWarning();
+            updateStatus('Initiating full takeoff...', 'loading');
+            try {
+                const response = await fetch(`${serverUrl}/full_takeoff/${alt}/${delay}`);
+                const data = await response.json();
+                updateStatus(data.status || 'Takeoff complete', 'success');
+            } catch (err) {
+                updateStatus('Full takeoff failed', 'error');
+            }
+        }
+
+        // Execute tmp92.py script in new terminal
+        async function executeTmp92Script() {
+            const button = document.getElementById('executeTmp92Btn');
+            const originalText = button.innerHTML;
+            
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div>Executing...';
+            updateStatus('Sending command to drone to launch tmp92.py...', 'loading');
+
+            try {
+                const response = await fetch(`${serverUrl}/execute_tmp92`, {
+                    method: 'POST',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('✅ Command sent to drone. Waiting for confirmation...', 'success');
+                    console.log('Script execution response:', data);
+                    
+                    // Start polling for status update
+                    pollTmp92Status();
+                } else if (response.status === 409) {
+                    // Script already running
+                    const data = await response.json();
+                    updateStatus(`⚠️ ${data.message}`, 'warning');
+                    console.log('Script already running:', data);
+                    
+                    // Update button to show running state
+                    pollTmp92Status();
+                } else {
+                    const data = await response.json();
+                    updateStatus(`❌ Failed to send command: ${data.message || 'Unknown error'}`, 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error executing script:', error);
+                updateStatus(`❌ Error sending command: ${error.message}`, 'error');
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+        
+        // Poll tmp92 status from server
+        async function pollTmp92Status() {
+            try {
+                const response = await fetch(`${serverUrl}/api/tmp92/status`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const tmp92 = data.tmp92;
+                    const runButton = document.getElementById('executeTmp92Btn');
+                    const killButton = document.getElementById('killTmp92Btn');
+                    
+                    if (tmp92.status === 'running') {
+                        runButton.innerHTML = `✅ tmp92.py Running (PID: ${tmp92.pid})`;
+                        runButton.disabled = true;
+                        runButton.style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
+                        runButton.style.display = 'none';  // Hide run button
+                        killButton.style.display = 'block';  // Show kill button
+                        updateStatus(`✅ tmp92.py is running on drone (PID: ${tmp92.pid}, Terminal: ${tmp92.terminal})`, 'success');
+                    } else if (tmp92.status === 'error') {
+                        runButton.innerHTML = '❌ tmp92.py Error';
+                        runButton.disabled = false;
+                        runButton.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                        updateStatus(`❌ tmp92.py execution failed: ${tmp92.error}`, 'error');
+                    } else if (tmp92.status === 'idle') {
+                        // Script was killed or stopped
+                        runButton.innerHTML = '🖥️ Run tmp92.py';
+                        runButton.disabled = false;
+                        runButton.style.background = 'linear-gradient(45deg, #e67e22, #d35400)';
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                    } else {
+                        // Status still unknown, keep polling for a bit
+                        setTimeout(pollTmp92Status, 500);
+                    }
+                }
+            } catch (error) {
+                console.error('Error polling tmp92 status:', error);
+            }
+        }
+        
+        // Check tmp92 status on page load
+        async function checkTmp92Status() {
+            try {
+                const response = await fetch(`${serverUrl}/api/tmp92/status`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const tmp92 = data.tmp92;
+                    const runButton = document.getElementById('executeTmp92Btn');
+                    const killButton = document.getElementById('killTmp92Btn');
+                    
+                    if (tmp92.status === 'running') {
+                        runButton.innerHTML = `✅ tmp92.py Running (PID: ${tmp92.pid})`;
+                        runButton.disabled = true;
+                        runButton.style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
+                        runButton.style.display = 'none';
+                        killButton.style.display = 'block';
+                    } else if (tmp92.status === 'error') {
+                        runButton.innerHTML = '❌ tmp92.py Error';
+                        runButton.disabled = false;
+                        runButton.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                    } else {
+                        // Idle or unknown - show run button
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                // Silently fail, button stays in default state
+            }
+        }
+        
+        // Kill tmp92.py script running on drone
+        async function killTmp92Script() {
+            const killButton = document.getElementById('killTmp92Btn');
+            const runButton = document.getElementById('executeTmp92Btn');
+            const originalText = killButton.innerHTML;
+            
+            killButton.disabled = true;
+            killButton.innerHTML = '<div class="spinner"></div>Killing...';
+            updateStatus('Sending kill command to drone...', 'loading');
+
+            try {
+                const response = await fetch(`${serverUrl}/api/tmp92/kill`, {
+                    method: 'POST',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('✅ Kill command sent to drone. Waiting for confirmation...', 'success');
+                    console.log('Kill response:', data);
+                    
+                    // Start polling for status update
+                    pollTmp92Status();
+                } else {
+                    const data = await response.json();
+                    updateStatus(`❌ Failed to send kill command: ${data.message || 'Unknown error'}`, 'error');
+                    killButton.disabled = false;
+                    killButton.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error killing script:', error);
+                updateStatus(`❌ Error sending kill command: ${error.message}`, 'error');
+                killButton.disabled = false;
+                killButton.innerHTML = originalText;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TMP88 SCRIPT EXECUTION FUNCTIONS (BASE SIDE)
+        // ═══════════════════════════════════════════════════════════════
+        
+        // Execute tmp88.py script locally on BASE
+        async function executeTmp88Script() {
+            const button = document.getElementById('executeTmp88Btn');
+            const originalText = button.innerHTML;
+            
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner"></div>Executing...';
+            updateStatus('Executing tmp88.py locally on BASE...', 'loading');
+
+            try {
+                const response = await fetch(`${serverUrl}/execute_tmp88`, {
+                    method: 'POST',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus(`✅ tmp88.py started on BASE (PID: ${data.pid})`, 'success');
+                    console.log('Script execution response:', data);
+                    
+                    // Start polling for status update
+                    pollTmp88Status();
+                } else if (response.status === 409) {
+                    // Script already running
+                    const data = await response.json();
+                    updateStatus(`⚠️ ${data.message}`, 'warning');
+                    console.log('Script already running:', data);
+                    
+                    // Update button to show running state
+                    pollTmp88Status();
+                } else {
+                    const data = await response.json();
+                    updateStatus(`❌ Failed to execute: ${data.message || 'Unknown error'}`, 'error');
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error executing script:', error);
+                updateStatus(`❌ Error executing tmp88.py: ${error.message}`, 'error');
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+        
+        // Poll tmp88 status from server
+        async function pollTmp88Status() {
+            try {
+                const response = await fetch(`${serverUrl}/api/tmp88/status`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const tmp88 = data.tmp88;
+                    const runButton = document.getElementById('executeTmp88Btn');
+                    const killButton = document.getElementById('killTmp88Btn');
+                    
+                    if (tmp88.status === 'running') {
+                        runButton.innerHTML = `✅ tmp88.py Running (PID: ${tmp88.pid})`;
+                        runButton.disabled = true;
+                        runButton.style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
+                        runButton.style.display = 'none';  // Hide run button
+                        killButton.style.display = 'block';  // Show kill button
+                        updateStatus(`✅ tmp88.py is running on BASE (PID: ${tmp88.pid})`, 'success');
+                    } else if (tmp88.status === 'error') {
+                        runButton.innerHTML = '❌ tmp88.py Error';
+                        runButton.disabled = false;
+                        runButton.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                        updateStatus(`❌ tmp88.py execution failed: ${tmp88.error}`, 'error');
+                    } else if (tmp88.status === 'idle') {
+                        // Script was killed or stopped
+                        runButton.innerHTML = '🖥️ Run tmp88.py (Base)';
+                        runButton.disabled = false;
+                        runButton.style.background = 'linear-gradient(45deg, #16a085, #138d75)';
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                    } else {
+                        // Status still unknown, keep polling for a bit
+                        setTimeout(pollTmp88Status, 500);
+                    }
+                }
+            } catch (error) {
+                console.error('Error polling tmp88 status:', error);
+            }
+        }
+        
+        // Check tmp88 status on page load
+        async function checkTmp88Status() {
+            try {
+                const response = await fetch(`${serverUrl}/api/tmp88/status`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const tmp88 = data.tmp88;
+                    const runButton = document.getElementById('executeTmp88Btn');
+                    const killButton = document.getElementById('killTmp88Btn');
+                    
+                    if (tmp88.status === 'running') {
+                        runButton.innerHTML = `✅ tmp88.py Running (PID: ${tmp88.pid})`;
+                        runButton.disabled = true;
+                        runButton.style.background = 'linear-gradient(45deg, #27ae60, #219a52)';
+                        runButton.style.display = 'none';
+                        killButton.style.display = 'block';
+                    } else if (tmp88.status === 'error') {
+                        runButton.innerHTML = '❌ tmp88.py Error';
+                        runButton.disabled = false;
+                        runButton.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                    } else {
+                        // Idle or unknown - show run button
+                        runButton.style.display = 'block';
+                        killButton.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                // Silently fail, button stays in default state
+            }
+        }
+        
+        // Kill tmp88.py script running on BASE
+        async function killTmp88Script() {
+            const killButton = document.getElementById('killTmp88Btn');
+            const runButton = document.getElementById('executeTmp88Btn');
+            const originalText = killButton.innerHTML;
+            
+            killButton.disabled = true;
+            killButton.innerHTML = '<div class="spinner"></div>Killing...';
+            updateStatus('Killing tmp88.py on BASE...', 'loading');
+
+            try {
+                const response = await fetch(`${serverUrl}/api/tmp88/kill`, {
+                    method: 'POST',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus(`✅ tmp88.py killed (PID: ${data.pid})`, 'success');
+                    console.log('Kill response:', data);
+                    
+                    // Start polling for status update
+                    pollTmp88Status();
+                } else {
+                    const data = await response.json();
+                    updateStatus(`❌ Failed to kill: ${data.message || 'Unknown error'}`, 'error');
+                    killButton.disabled = false;
+                    killButton.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error killing script:', error);
+                updateStatus(`❌ Error killing tmp88.py: ${error.message}`, 'error');
+                killButton.disabled = false;
+                killButton.innerHTML = originalText;
+            }
+        }
+
+        // Open camera interface using Flask server URL
+        function openCamera() {
+            // Use the Flask server URL to open camera.html
+            const cameraUrl = `${serverUrl}/camera.html`;
+            window.open(cameraUrl, '_blank');
+            updateStatus('Opening camera interface...', 'info');
+        }
+
+        // Movement command functions
+        async function sendMovement(direction) {
+            if (!droneConnected) return showWarning();
+            updateStatus(`Moving ${direction}...`, 'loading');
+            try {
+                const response = await fetch(`${serverUrl}/move/${direction}`, {
+                    method: 'GET'
+                });
+                const data = await response.json();
+                updateStatus(data.message || `Moving ${direction} complete`, 'success');
+            } catch (err) {
+                updateStatus(`Movement ${direction} failed`, 'error');
+                console.error('Movement error:', err);
+            }
+        }
+
+        // New movement function with distance parameter
+        async function sendMovementWithDistance(direction) {
+            if (!droneConnected) return showWarning();
+            
+            const distance = document.getElementById('movementDistance').value || 10;
+            updateStatus(`Moving ${direction} ${distance}m...`, 'loading');
+            
+            try {
+                const response = await fetch(`${serverUrl}/move/${direction}?distance=${distance}`, {
+                    method: 'GET'
+                });
+                const data = await response.json();
+                updateStatus(data.message || `Moving ${direction} ${distance}m complete`, 'success');
+            } catch (err) {
+                updateStatus(`Movement ${direction} failed`, 'error');
+                console.error('Movement error:', err);
+            }
+        }
+
+        // Update distance indicators when input changes
+        function updateDistanceIndicators() {
+            const distance = document.getElementById('movementDistance').value || 10;
+            const indicators = ['northDistance', 'southDistance', 'eastDistance', 'westDistance'];
+            indicators.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = `${distance}m`;
+                }
+            });
+        }
+
+        // Throttle control functions
+        function updateThrottleValue() {
+            const slider = document.getElementById('throttleSlider');
+            const valueDisplay = document.getElementById('throttleValue');
+            valueDisplay.textContent = slider.value;
+        }
+
+        async function applyThrottle() {
+            if (!droneConnected) return showWarning();
+            
+            const throttleValue = document.getElementById('throttleSlider').value;
+            updateStatus(`Setting throttle to ${throttleValue}...`, 'loading');
+            
+            try {
+                const response = await fetch(`${serverUrl}/throttle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        value: parseInt(throttleValue)
+                    })
+                });
+                const data = await response.json();
+                updateStatus(data.message || `Throttle set to ${throttleValue}`, 'success');
+            } catch (err) {
+                updateStatus('Throttle control failed', 'error');
+                console.error('Throttle error:', err);
+            }
+        }
+
+        // Parameters fetching and display functions
+        async function fetchParameters() {
+            try {
+                const response = await fetch(`${serverUrl}/parameters`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        displayParameters(data.parameters);
+                    }
+                } else {
+                    console.error('Failed to fetch parameters:', response.status);
+                }
+            } catch (error) {
+                console.error('Error fetching parameters:', error);
+            }
+        }
+
+        function displayParameters(params) {
+            // Update refresh rate from server configuration
+            if (params.auto_update_refresh_rate && params.auto_update_refresh_rate !== AUTO_UPDATE_REFRESH_RATE) {
+                AUTO_UPDATE_REFRESH_RATE = params.auto_update_refresh_rate;
+                updateAutoUpdateInterval(); // Restart interval with new rate if active
+            }
+            
+            // Current Frequency Display
+            const currentChannel = params.current_channel || 0;
+            const currentTxFreq = params.current_tx_freq;
+            const currentRxFreq = params.current_rx_freq;
+            
+            document.getElementById('current-channel').textContent = `CH ${currentChannel}`;
+            
+            if (currentTxFreq !== undefined) {
+                document.getElementById('current-tx-freq').textContent = `${currentTxFreq.toFixed(1)} MHz`;
+            } else {
+                document.getElementById('current-tx-freq').textContent = 'N/A';
+            }
+            
+            if (currentRxFreq !== undefined) {
+                document.getElementById('current-rx-freq').textContent = `${currentRxFreq.toFixed(1)} MHz`;
+            } else {
+                document.getElementById('current-rx-freq').textContent = 'N/A';
+            }
+            
+            // System Settings
+            document.getElementById('param-heartbeat').textContent = params.heart_beat ? 'Enabled' : 'Disabled';
+            document.getElementById('param-hopping').textContent = params.hop_frequency ? 'Enabled' : 'Disabled';
+            document.getElementById('param-compression').textContent = params.compression ? 'Enabled' : 'Disabled';
+            document.getElementById('param-hop-interval').textContent = `${params.freq_hop_interval} sec`;
+            document.getElementById('param-hops-per-sec').textContent = `${params.hops_per_second.toFixed(2)} Hz`;
+            document.getElementById('param-t').textContent = params.t_parameter !== undefined ? `${params.t_parameter} sec` : '-';
+
+            // Radio Settings
+            document.getElementById('param-rx-gain').textContent = `${params.rx_gain} dB`;
+            document.getElementById('param-tx-gain').textContent = `${params.tx_gain} dB`;
+            document.getElementById('param-bandwidth').textContent = `${params.bandwidth} kHz`;
+            document.getElementById('param-center-freq').textContent = `${params.center_freq} MHz`;
+            document.getElementById('param-sample-rate').textContent = `${params.sample_rate} MHz`;
+
+            // Frequency Channels with highlighting
+            const droneFreqList = document.getElementById('drone-freq-list');
+            const baseFreqList = document.getElementById('base-freq-list');
+            
+            // Highlight current channel in drone frequencies
+            droneFreqList.innerHTML = params.drone_tx_frequencies
+                .map((freq, idx) => {
+                    const isActive = idx === currentChannel;
+                    const channelClass = isActive ? 'freq-active' : '';
+                    const icon = isActive ? '' : '';
+                    const activeId = isActive ? ' id="drone-active-freq"' : '';
+                    return `<span class="${channelClass}"${activeId}>${icon}Ch ${idx}: ${freq.toFixed(1)} MHz</span>`;
+                })
+                .join('<br>');
+            
+            // Highlight current channel in base frequencies
+            baseFreqList.innerHTML = params.base_tx_frequencies
+                .map((freq, idx) => {
+                    const isActive = idx === currentChannel;
+                    const channelClass = isActive ? 'freq-active' : '';
+                    const icon = isActive ? '' : '';
+                    const activeId = isActive ? ' id="base-active-freq"' : '';
+                    return `<span class="${channelClass}"${activeId}>${icon}Ch ${idx}: ${freq.toFixed(1)} MHz</span>`;
+                })
+                .join('<br>');
+            
+            // Auto-scroll to show active frequency (DISABLED to prevent page scroll)
+            // scrollToActiveFrequency();
+            
+            // Update frequency list selector
+            updateFreqListSelector(params);
+        }
+
+        // Track last known state to avoid unnecessary updates
+        let lastFreqListIndex = -1;
+        let lastTotalLists = -1;
+
+        // Update the frequency list selector UI
+        function updateFreqListSelector(params) {
+            if (!params) return;
+            
+            const activeIndex = params.freq_list_index !== undefined ? params.freq_list_index : 0;
+            const totalLists = params.total_freq_lists || 2;
+            
+            // Always update info displays and frequency range (they don't cause dancing)
+            document.getElementById('active-list-index').textContent = activeIndex;
+            document.getElementById('total-lists').textContent = totalLists;
+            
+            // Display frequency range for active list - ALWAYS UPDATE to reflect current frequencies
+            if (params.drone_tx_frequencies && params.drone_tx_frequencies.length > 0) {
+                const minFreq = Math.min(...params.drone_tx_frequencies);
+                const maxFreq = Math.max(...params.drone_tx_frequencies);
+                document.getElementById('active-freq-range').textContent = 
+                    `${minFreq.toFixed(1)} - ${maxFreq.toFixed(1)} MHz`;
+            }
+            
+            const buttonsContainer = document.getElementById('freqListButtons');
+            
+            // Only regenerate buttons if the configuration changed (number of lists or active index)
+            if (activeIndex !== lastFreqListIndex || totalLists !== lastTotalLists) {
+                // Get frequency ranges for all lists if available
+                const allLists = params.drone_tx_frequencies_2d || [];
+                
+                // Clear and regenerate buttons
+                buttonsContainer.innerHTML = '';
+                
+                for (let i = 0; i < totalLists; i++) {
+                    const button = document.createElement('button');
+                    button.className = 'freq-list-btn';
+                    button.id = `freq-list-btn-${i}`;
+                    
+                    // Determine frequency band name
+                    let bandName = `List ${i}`;
+                    if (allLists[i] && allLists[i].length > 0) {
+                        const firstFreq = allLists[i][0];
+                        if (firstFreq >= 900 && firstFreq <= 920) {
+                            bandName = `900 MHz Band (${i})`;
+                        } else if (firstFreq >= 400 && firstFreq <= 420) {
+                            bandName = `400 MHz Band (${i})`;
+                        } else if (firstFreq >= 700 && firstFreq <= 750) {
+                            bandName = `700 MHz Band (${i})`;
+                        } else if (firstFreq >= 1100 && firstFreq <= 1200) {
+                            bandName = `1.1 GHz Band (${i})`;
+                        } else {
+                            bandName = `${firstFreq.toFixed(0)} MHz (${i})`;
+                        }
+                    }
+                    
+                    button.textContent = bandName;
+                    
+                    // Mark active button
+                    if (i === activeIndex) {
+                        button.classList.add('active');
+                    }
+                    
+                    // Add click handler
+                    button.onclick = () => switchFreqList(i);
+                    
+                    buttonsContainer.appendChild(button);
+                }
+                
+                // Update last known state
+                lastFreqListIndex = activeIndex;
+                lastTotalLists = totalLists;
+            } else {
+                // Just update the active state of existing buttons (no regeneration)
+                for (let i = 0; i < totalLists; i++) {
+                    const button = document.getElementById(`freq-list-btn-${i}`);
+                    if (button) {
+                        if (i === activeIndex) {
+                            button.classList.add('active');
+                        } else {
+                            button.classList.remove('active');
+                        }
+                    }
+                }
+            }
+        }
+
+        // Switch to a different frequency list
+        async function switchFreqList(newIndex) {
+            const statusDiv = document.getElementById('freqListStatus');
+            statusDiv.className = 'freq-list-status';
+            statusDiv.style.display = 'none';
+            
+            // Disable all buttons during switch
+            const buttons = document.querySelectorAll('.freq-list-btn');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            updateStatus('Switching frequency list...', 'loading');
+            
+            try {
+                const response = await fetch(`${serverUrl}/switch_freq_list`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        freq_list_index: newIndex
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    updateStatus(`✓ Switched to frequency list ${newIndex}`, 'success');
+                    statusDiv.textContent = `✓ ${result.message}`;
+                    statusDiv.className = 'freq-list-status success show';
+                    
+                    // Refresh parameters to show new frequencies
+                    setTimeout(() => {
+                        fetchParameters();
+                    }, 500);
+                    
+                    // Hide status message after 5 seconds
+                    setTimeout(() => {
+                        statusDiv.className = 'freq-list-status success';
+                    }, 5000);
+                } else {
+                    throw new Error(result.message || 'Failed to switch frequency list');
+                }
+            } catch (error) {
+                console.error('Error switching frequency list:', error);
+                updateStatus(`❌ Error: ${error.message}`, 'error');
+                statusDiv.textContent = `❌ Error: ${error.message}`;
+                statusDiv.className = 'freq-list-status error show';
+                
+                // Hide error message after 10 seconds
+                setTimeout(() => {
+                    statusDiv.className = 'freq-list-status error';
+                }, 10000);
+            } finally {
+                // Re-enable buttons
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        // Track user interaction to prevent auto-scroll interference
+        function trackUserInteraction() {
+            userInteracting = true;
+            lastUserInteraction = Date.now();
+            
+            // Clear existing timeout
+            if (userScrollTimeout) {
+                clearTimeout(userScrollTimeout);
+            }
+            
+            // Set user as not actively interacting after 3 seconds of no activity
+            userScrollTimeout = setTimeout(() => {
+                userInteracting = false;
+            }, 3000);
+        }
+
+        // Auto-scroll function to keep active frequency visible and follow the green box
+        // Only scrolls if user isn't actively interacting with the page
+        function scrollToActiveFrequency() {
+            // Don't auto-scroll if user is actively interacting
+            if (userInteracting) {
+                return;
+            }
+            
+            // Use setTimeout to ensure DOM is updated before scrolling
+            setTimeout(() => {
+                // Scroll drone frequency list
+                const droneActiveFreq = document.getElementById('drone-active-freq');
+                
+                if (droneActiveFreq) {
+                    // Use scrollIntoView to automatically follow the green box
+                    droneActiveFreq.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',  // Only scroll if not visible
+                        inline: 'nearest'
+                    });
+                }
+                
+                // Scroll base frequency list
+                const baseActiveFreq = document.getElementById('base-active-freq');
+                
+                if (baseActiveFreq) {
+                    // Use scrollIntoView to automatically follow the green box
+                    baseActiveFreq.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',  // Only scroll if not visible
+                        inline: 'nearest'
+                    });
+                }
+            }, 50); // Small delay to ensure DOM is fully updated
+        }
+
+        function refreshParameters() {
+            updateStatus('Refreshing parameters...', 'loading');
+            fetchParameters();
+            setTimeout(() => {
+                updateStatus('Parameters refreshed', 'success');
+                // Force scroll to active frequency on manual refresh (DISABLED to prevent page scroll)
+                // forceScrollToActiveFrequency();
+            }, 500);
+        }
+
+        // Force scroll to active frequency (ignores user interaction state)
+        function forceScrollToActiveFrequency() {
+            setTimeout(() => {
+                // Scroll drone frequency list
+                const droneActiveFreq = document.getElementById('drone-active-freq');
+                
+                if (droneActiveFreq) {
+                    droneActiveFreq.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'nearest'
+                    });
+                }
+                
+                // Scroll base frequency list
+                const baseActiveFreq = document.getElementById('base-active-freq');
+                
+                if (baseActiveFreq) {
+                    baseActiveFreq.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'nearest'
+                    });
+                }
+            }, 50);
+        }
+
+        // Show warning dialog
+        function showWarning() {
+            document.getElementById('warningOverlay').style.display = 'flex';
+        }
+
+        // Close warning dialog
+        function closeWarning() {
+            document.getElementById('warningOverlay').style.display = 'none';
+        }
+
+        // ============================================
+        // CONFIG EDITOR FUNCTIONS (DEPRECATED - Now uses separate page)
+        // ============================================
+        
+        // Note: Config editor now opens as a separate page at /config
+        // These functions are kept for backward compatibility but are no longer used
+        
+        /* 
+        // Open config editor and load current values
+        async function openEnvEditor() {
+            const overlay = document.getElementById('configEditorOverlay');
+            overlay.style.display = 'flex';
+            
+            // Load current configuration values
+            updateStatus('Loading configuration...', 'loading');
+            
+            try {
+                const response = await fetch(`${serverUrl}/parameters`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        const params = data.parameters;
+                        
+                        // Populate form with current values
+                        document.getElementById('env_HEART_BEAT').value = params.heart_beat ? 'true' : 'false';
+                        document.getElementById('env_HOP_FREQUENCY').value = params.hop_frequency ? 'true' : 'false';
+                        document.getElementById('env_COMPRESSION').value = params.compression ? 'true' : 'false';
+                        document.getElementById('env_FREQ_HOP_INTERVAL').value = params.freq_hop_interval;
+                        document.getElementById('env_T').value = params.t_parameter;
+                        document.getElementById('env_SF_RX').value = params.spreading_factor;
+                        document.getElementById('env_RX_GAIN').value = params.rx_gain;
+                        document.getElementById('env_TX_GAIN').value = params.tx_gain;
+                        document.getElementById('env_BANDWIDTH').value = params.bandwidth * 1000; // Convert kHz to Hz
+                        document.getElementById('env_CENTER_FREQ').value = params.center_freq * 1e6; // Convert MHz to Hz
+                        document.getElementById('env_SAMPLE_RATE').value = params.sample_rate * 1e6; // Convert MHz to Hz
+                        document.getElementById('env_SLEEP_TIME').value = params.sleep_time;
+                        document.getElementById('env_SAMPLES_BLOCK_REC').value = params.samples_block_rec;
+                        document.getElementById('env_AUTO_UPDATE_REFRESH_RATE').value = params.auto_update_refresh_rate || 10000;
+                        
+                        // Frequency lists (already in MHz)
+                        document.getElementById('env_DRONE_TX_FREQUENCIES').value = params.drone_tx_frequencies.join(',');
+                        document.getElementById('env_BASE_TX_FREQUENCIES').value = params.base_tx_frequencies.join(',');
+                        
+                        updateStatus('Configuration loaded', 'success');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading configuration:', error);
+                updateStatus('Failed to load configuration', 'error');
+            }
+        }
+
+        // Close config editor
+        function closeEnvEditor() {
+            document.getElementById('configEditorOverlay').style.display = 'none';
+        }
+
+        // Save configuration to server
+        async function saveEnvConfig() {
+            updateStatus('Saving configuration...', 'loading');
+            
+            try {
+                // Collect all form values
+                const config = {
+                    HEART_BEAT: document.getElementById('env_HEART_BEAT').value,
+                    HOP_FREQUENCY: document.getElementById('env_HOP_FREQUENCY').value,
+                    COMPRESSION: document.getElementById('env_COMPRESSION').value,
+                    FREQ_HOP_INTERVAL: document.getElementById('env_FREQ_HOP_INTERVAL').value,
+                    T: document.getElementById('env_T').value,
+                    SF_RX: document.getElementById('env_SF_RX').value,
+                    RX_GAIN: document.getElementById('env_RX_GAIN').value,
+                    TX_GAIN: document.getElementById('env_TX_GAIN').value,
+                    BANDWIDTH: document.getElementById('env_BANDWIDTH').value,
+                    CENTER_FREQ: document.getElementById('env_CENTER_FREQ').value,
+                    SAMPLE_RATE: document.getElementById('env_SAMPLE_RATE').value,
+                    SLEEP_TIME: document.getElementById('env_SLEEP_TIME').value,
+                    SAMPLES_BLOCK_REC: document.getElementById('env_SAMPLES_BLOCK_REC').value,
+                    DRONE_TX_FREQUENCIES: document.getElementById('env_DRONE_TX_FREQUENCIES').value,
+                    BASE_TX_FREQUENCIES: document.getElementById('env_BASE_TX_FREQUENCIES').value,
+                    AUTO_UPDATE_REFRESH_RATE: document.getElementById('env_AUTO_UPDATE_REFRESH_RATE').value
+                };
+
+                // Send configuration to server
+                const response = await fetch(`${serverUrl}/save_config`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('✅ Configuration saved successfully! Restart required for changes to take effect.', 'success');
+                    closeEnvEditor();
+                    
+                    // Show restart reminder
+                    setTimeout(() => {
+                        alert('⚠️ Configuration Saved!\n\nPlease restart the Python backend for the changes to take effect:\n\n1. Stop the current Python process\n2. Restart tx_rx_multiprocessing.py\n3. Refresh this web page');
+                    }, 500);
+                } else {
+                    const error = await response.json();
+                    updateStatus(`❌ Failed to save: ${error.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving configuration:', error);
+                updateStatus(`❌ Error saving configuration: ${error.message}`, 'error');
+            }
+        }
+
+        */
+        
+        // ============================================
+        // END CONFIG EDITOR FUNCTIONS
+        // ============================================
+
+        // Initialize connection check
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('Initializing connection check...', 'loading');
+            checkConnection();
+            
+            // Fetch parameters on load (one time)
+            fetchParameters();
+            
+            // Check tmp92 status on load
+            checkTmp92Status();
+            
+            // Check tmp88 status on load
+            checkTmp88Status();
+            
+            // Check connection every 5 seconds
+            setInterval(checkConnection, 5000);
+            
+            // Check tmp92 status every 10 seconds
+            setInterval(checkTmp92Status, 10000);
+            
+            // Check tmp88 status every 10 seconds
+            setInterval(checkTmp88Status, 10000);
+            
+            // NOTE: Auto-update for parameters is now controlled by the "Auto Update" button
+            // Users must enable it manually to start periodic parameter updates
+            
+            // Add throttle slider event listener
+            const throttleSlider = document.getElementById('throttleSlider');
+            if (throttleSlider) {
+                throttleSlider.addEventListener('input', updateThrottleValue);
+            }
+            
+            // Add movement distance input event listener
+            const movementDistance = document.getElementById('movementDistance');
+            if (movementDistance) {
+                movementDistance.addEventListener('input', updateDistanceIndicators);
+                // Initialize distance indicators
+                updateDistanceIndicators();
+            }
+            
+            // Add user interaction tracking to prevent auto-scroll interference
+            // Track scrolling
+            window.addEventListener('scroll', trackUserInteraction, { passive: true });
+            
+            // Track mouse interactions
+            document.addEventListener('mousedown', trackUserInteraction);
+            document.addEventListener('mousemove', trackUserInteraction);
+            document.addEventListener('wheel', trackUserInteraction, { passive: true });
+            
+            // Track touch interactions (mobile)
+            document.addEventListener('touchstart', trackUserInteraction, { passive: true });
+            document.addEventListener('touchmove', trackUserInteraction, { passive: true });
+            
+            // Track keyboard interactions
+            document.addEventListener('keydown', trackUserInteraction);
+        });
+
+        // Handle keyboard shortcuts (only when connected)
+        document.addEventListener('keydown', function(event) {
+            if (event.altKey && droneConnected) {
+                switch(event.key) {
+                    case 'a':
+                        event.preventDefault();
+                        sendCommand('arm');
+                        break;
+                    case 'g':
+                        event.preventDefault();
+                        sendCommand('mode/guided');
+                        break;
+                    case 't':
+                        event.preventDefault();
+                        sendCommand('takeoff');
+                        break;
+                    case 'l':
+                        event.preventDefault();
+                        sendCommand('mode/land');
+                        break;
+                }
+            } else if (event.altKey && !droneConnected) {
+                event.preventDefault();
+                showWarning();
+            }
+        });
+
+        // Show keyboard shortcuts after initial load
+        setTimeout(() => {
+            if (droneConnected) {
+                updateStatus('Keyboard shortcuts: Alt+A (Arm), Alt+G (Guided), Alt+T (Takeoff), Alt+L (Land)', 'info');
+            } else {
+                updateStatus('Waiting for drone connection... The system will automatically detect SITL simulator or real drone.', 'warning');
+            }
+        }, 3000);
+
+        // Handle page visibility change to refresh connection status
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                checkConnection();
+            }
+        });
+    </script>
+</body>
+</html>

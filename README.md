@@ -93,6 +93,7 @@ file_transfer.py           Sender / Receiver classes for the hybrid file pipelin
 generate_keys.py           creates receiver_private.pem / receiver_public.pem
 config.py                  paths, key sizes, LoRa payload size
 lora.py, lora_transceiver.py, lora_utils.py   LoRa PHY + USRP (UHD) transceiver
+web/drone.html             browser ground-station dashboard (set Host/Port, connect, send encrypted commands, read drone status back)
 attacker_replay/           intruder-side IQ replay scripts (a1-a5.py) used to test replay protection
 encryption-project/src/keys/receiver_public.pem   receiver public key (the private key is NOT in the repo)
 docs/figures/              architecture diagrams and recorded test outputs
@@ -113,9 +114,27 @@ python generate_keys.py
 python lora_secure_receiver.py      # drone side
 python lora_secure_sender.py        # ground station, then send commands from the dashboard or:
 curl http://localhost:5000/arm
+
+# 3. Open web/drone.html in a browser, set Host/Port to the sender (127.0.0.1:5000 by default), Connect, and fly
 ```
 
 > 🔐 **Private keys are never committed.** `.gitignore` blocks `*private*.pem`, the stored session key `aes_key.json`, and the `.bin`/`.enc`/`.dec` files. Generate your own key pair with `generate_keys.py`.
+
+## Web control panel ([`web/drone.html`](web/drone.html))
+
+A browser-based ground-station dashboard — a lightweight Mission Planner built for this link. It drives the drone entirely through the sender's encrypted API, so every button press is sent as an AES-GCM-encrypted MAVLink command over LoRa.
+
+**How it connects**
+
+1. Start `lora_secure_sender.py` on the ground station. Its Flask server listens on **port 5000** (`host='0.0.0.0'`) and exposes `/arm`, `/disarm`, `/takeoff`, `/mode/guided`, `/mode/land`, `/mode/stabilize`, `/mode/poshold`, `/mode/rtl`, `/motor_test`, `/status` and `/connect`.
+2. Open `web/drone.html` in a browser. In **Server Configuration**, enter the **Host** and **Port** of the machine running the sender — these are the host/port from the code (default **`127.0.0.1`** and **`5000`**; use the ground station's LAN IP if the browser is on another machine) — and click **Update**.
+3. Click **🔌 Connect**. The page polls `/status` and `/connect`; once the server and the drone report connected, the command buttons unlock.
+4. Press **Arm / Guided / Takeoff / Land**, etc. Each button `fetch()`es the matching endpoint, the sender encrypts the MAVLink command and transmits it over LoRa, and the receiver on the drone decrypts and executes it.
+5. **Checking the command took effect:** the panel's live status / parameter readout (auto-update, refresh rate set server-side via `.env`) shows the drone's mode and state echoed back, so from the ground station you can confirm whether the drone actually accepted each command.
+
+<p align="center"><img src="docs/figures/10_task2_dashboard_commands.png" width="800" alt="Web control panel sending encrypted commands, receiver decrypting them"></p>
+
+> The server runs on `0.0.0.0:5000`, so it is reachable from other machines on the network. Run it only on a trusted/isolated network — the HTTP API itself is not authenticated; the encryption protects the LoRa link, not the local dashboard-to-server hop.
 
 ## Planned improvements
 
