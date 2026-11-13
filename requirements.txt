@@ -1,0 +1,7 @@
+flask
+flask-cors
+pymavlink
+pycryptodome
+requests
+numpy
+scipy

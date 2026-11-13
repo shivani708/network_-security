@@ -1,0 +1,12 @@
+# Secret key material - never commit
+*private*.pem
+aes_key.json
+*.bin
+*.enc
+*.dec
+.env
+
+# Runtime / logs
+*.tlog
+__pycache__/
+*.pyc
