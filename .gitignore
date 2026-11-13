@@ -6,6 +6,9 @@ aes_key.json
 *.dec
 .env
 
+# Large IQ captures (GQRX .raw recordings) - too big for GitHub
+*.raw
+
 # Runtime
 __pycache__/
 *.pyc

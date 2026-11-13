@@ -73,6 +73,8 @@ Testing on real hardware showed that **LoRa retransmissions deliver the same enc
 - Each command executed **exactly once**, even with LoRa-level retransmissions.
 - The replay from the independent intruder SDR was also rejected.
 
+The attacker-side scripts used to stage these replays (re-transmitting a captured IQ recording on a USRP) are in [`attacker_replay/`](attacker_replay/).
+
 ## System overview
 
 <p align="center"><img src="docs/figures/01_system_flow.png" width="600" alt="Overall system flow"></p>
@@ -91,6 +93,7 @@ file_transfer.py           Sender / Receiver classes for the hybrid file pipelin
 generate_keys.py           creates receiver_private.pem / receiver_public.pem
 config.py                  paths, key sizes, LoRa payload size
 lora.py, lora_transceiver.py, lora_utils.py   LoRa PHY + USRP (UHD) transceiver
+attacker_replay/           intruder-side IQ replay scripts (a1-a5.py) used to test replay protection
 encryption-project/src/keys/receiver_public.pem   receiver public key (the private key is NOT in the repo)
 docs/figures/              architecture diagrams and recorded test outputs
 ```
