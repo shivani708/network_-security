@@ -6,7 +6,6 @@ aes_key.json
 *.dec
 .env
 
-# Runtime / logs
-*.tlog
+# Runtime
 __pycache__/
 *.pyc
