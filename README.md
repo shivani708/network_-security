@@ -124,6 +124,8 @@ curl http://localhost:5000/arm
 
 A browser-based ground-station dashboard — a lightweight Mission Planner built for this link. It drives the drone entirely through the sender's encrypted API, so every button press is sent as an AES-GCM-encrypted MAVLink command over LoRa.
 
+👉 **See the dashboard design (rendered):** [open `web/drone.html` in a browser](https://htmlpreview.github.io/?https://github.com/shivani708/network_-security/blob/main/web/drone.html) — GitHub shows the raw `.html` as code; this link renders the page. (Buttons need the local sender running to actually control the drone.)
+
 **How it connects**
 
 1. Start `lora_secure_sender.py` on the ground station. Its Flask server listens on **port 5000** (`host='0.0.0.0'`) and exposes `/arm`, `/disarm`, `/takeoff`, `/mode/guided`, `/mode/land`, `/mode/stabilize`, `/mode/poshold`, `/mode/rtl`, `/motor_test`, `/status` and `/connect`.
